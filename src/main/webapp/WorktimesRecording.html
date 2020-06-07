@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<!-- Required meta tags, viewport needed for Bootstrap -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="assets/css/bootstrap.min.css">
+    
+    <!-- My CSS -->
+    <link rel="stylesheet" href="css/worktimeRecording.css">
+    
+    <!-- Fonts -->
+    <link href='http://fonts.googleapis.com/css?family=Lato:100,300,400,300italic' rel='stylesheet' type='text/css'>
+    
+    <!-- jquery is not required yet -->
+    <!-- <script type="text/javascript" src="js/lib/jquery-2.0.3.min.js"></script>  -->
+    <script type="text/javascript" src="assets/js/jquery-3.5.0.min.js"></script>
+    <script type="text/javascript" src="assets/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="assets/js/handlebars-v4.7.6.js"></script>
+    <script type="text/javascript" src="js/utils.js"></script>
+    <script type="text/javascript" src="js/worktimesUtil.js"></script>
+    <script type="text/javascript" src="js/worktimes.js"></script>
+    
+    <script id="worktimes-row-first-template" type="text/x-handlebars-template">
+		{{#with rowFirst}}
+            <div class="col-6 themed-grid-col" id="user"><div class="content-name">{{username}}</div></div>
+				<div class="col-6 themed-grid-col" id="workdayDate">
+					<div class="col-last">
+						<a href="#" class="btn btn-scroll"><ion-icon name="chevron-back-outline"></ion-icon></a>
+						<div class="content-date" id="currentDate">{{date}}</div>
+						<a href="#" class="btn btn-scroll"><ion-icon name="chevron-forward-outline"></ion-icon></a>
+					</div>
+				</div>
+			</div>
+		{{/with}}
+	</script>
+
+        <script id="worktimes-row-template" type="text/x-handlebars-template">
+		{{#each workdayWorktimes}}
+		{{#with this}}
+            	<div class="row mb-3">
+					<div class="col-2 themed-grid-col"><input type="time" class="form-control" value="{{startTime}}" placeholder="Start time" name="startTime"></div>
+					<div class="col-2 themed-grid-col"><input type="time" class="form-control" value="{{endTime}}" placeholder="End time" name="endTime"></div>
+					<div class="col-3 themed-grid-col">
+						<select type="text" class="form-control" id="workingTypes" name="type">
+							<option hidden selected value="{{type}}">{{type}}</option>					
+							<option value="OFFICE">OFFICE</option>
+							<option value="HOMEOFFICE">HOMEOFFICE</option>
+							<option value="DELEGACY">DELEGACY</option>
+						</select>
+					</div>
+					<div class="col-3 themed-grid-col"><input type="text" class="form-control" value="{{comment}}" placeholder="Description" name="comment"></div>
+					<input hidden type="number" class="form-control" value="{{rowId}}" name="rowId">
+					<input hidden type="number" class="form-control" value="{{id}}" name="id">
+					<div class="col-2 themed-grid-col"><a class="btn btn-close" onclick="deleteWorktime({{rowId}})" id="deleteWorktime" href="#"><ion-icon name="close-outline"></ion-icon></a></div>
+				</div>
+		{{/with}}
+		{{/each}}
+	</script>
+
+    <script id="worktimes-row-last-template" type="text/x-handlebars-template">
+		{{#with rowLast}}
+			<div class="col-10 themed-grid-col">
+				<p>
+					<ion-icon name="construct-outline">
+					</ion-icon>
+					 {{date}}
+					 &#8722; 
+					 <ion-icon name="person-outline">
+					 </ion-icon>
+					  {{username}}
+				</p>
+			</div>
+		{{/with}}
+	</script>
+	
+	<script id="error-message-template" type="text/x-handlebars-template">
+		{{#with errorMessage}}
+			<div class="modal fade" id="worktimesAreNotCorrect" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+	  			<div class="modal-dialog modal-dialog-centered" role="document">
+	    			<div class="modal-content">
+	      				<div class="pop-up-error modal-header">
+	        				<h5 class="modal-title" id="exampleModalLongTitle">{{message}}</h5>
+	        				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+	          				<span aria-hidden="true">&times;</span>
+	        				</button>
+	      				</div>
+	      				<div class="pop-up-window-buttons modal-footer">
+	        			<a type="button" class="btn btn-primary" data-dismiss="modal" href="#">{{errorButton}}</a>
+	      				</div>
+	   			 	</div>
+	  			</div>
+			</div>
+		{{/with}}
+	</script>
+	
+    <title>Working Hours</title>
+</head>
+<body id="workday-body">
+	<section class="container container-workday">
+			<form id="WorktimesForm">
+				<div class="row mb-5 header">
+					<div class="col-12 themed-grid-col"><h1>Worktimes</h1></div>
+				</div>
+				
+				<div class="row mb-3 row-first" id="row-first-table">
+					<div class="col-6 themed-grid-col" id="user"><div class="content-name">Username</div></div>
+					<div class="col-6 themed-grid-col" id="workdayDate">
+						<div class="col-last">
+							<a href="#" class="btn btn-scroll"><ion-icon name="chevron-back-outline"></ion-icon></a>
+							<div class="content-date" id="currentDate">Date</div>
+							<a href="#" class="btn btn-scroll"><ion-icon name="chevron-forward-outline"></ion-icon></a>
+						</div>
+					</div>
+				</div>
+				
+				<div class="row mb-3 input-name">
+					<div class="col-2 themed-grid-col">Start</div>
+					<div class="col-2 themed-grid-col">End</div>
+					<div class="col-3 themed-grid-col">Type</div>
+					<div class="col-3 themed-grid-col">Description</div>
+					<div class="col-2 themed-grid-col">Delete</div>
+				</div>
+				<hr class="mb-4">
+				
+				<div id="worktimes-table">
+					<div class="row mb-1 row-btn">
+						<div class="col-5 themed-grid-col"></div>
+						<div class="loader"></div> 
+					</div> 
+				</div>
+
+				<hr class="mb-4">
+				<div class="row mb-1 row-btn">
+					<div class="col-12 themed-grid-col"><a class="btn btn-add" href="#" id="addNewWorktime"><ion-icon name="add-outline"></ion-icon></a></div>
+				</div>
+				
+				<div class="row mb-5 row-last">
+					<div class="col-3 themed-grid-col"></div>
+					<div class="col-3 themed-grid-col"></div>
+					<div class="col-6 themed-grid-col col-last">
+						<a class="btn btn-secondary" href="#" id="backToWorkdays">Back</a>
+						<a class="btn btn-primary" id="saveWorkdayWorktimes" href="#" data-toggle="modal" >Accept</a>
+					</div>
+				</div>
+				
+				<div class="row mb-3 footer" id="row-last-table">
+				</div>
+				<div id="modal">
+				</div>
+
+			</form>
+	</section>
+
+	<div class="modal fade" id="acceptWorktimes" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+	  <div class="modal-dialog modal-dialog-centered" role="document">
+	    <div class="modal-content">
+	      <div class="pop-up-success modal-header">
+	        <h5 class="modal-title" id="exampleModalLongTitle">Saved succesfully!</h5>
+	        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+	          <span aria-hidden="true">&times;</span>
+	        </button>
+	      </div>
+
+	      <div class="pop-up-window-buttons modal-footer">
+	      	<a class="btn btn-secondary" href="workday.html">Workdays</a>
+	        <a type="button" class="btn btn-primary" data-dismiss="modal" href="#">Ok</a>
+	      </div>
+	    </div>
+	  </div>
+	</div>
+	
+	<div class="modal fade" id="cannotSaveEmptyWorktimes" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+	  <div class="modal-dialog modal-dialog-centered" role="document">
+	    <div class="modal-content">
+	      <div class="pop-up-error modal-header">
+	        <h5 class="modal-title" id="exampleModalLongTitle">Cannot save an empty workday!</h5>
+	        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+	          <span aria-hidden="true">&times;</span>
+	        </button>
+	      </div>
+
+	      <div class="pop-up-window-buttons modal-footer">
+	        <a type="button" class="btn btn-primary" data-dismiss="modal" href="#">Ok</a>
+	      </div>
+	    </div>
+	  </div>
+	</div>
+	
+	<div class="modal fade" id="worktimesAreNotCorrect" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+	  <div class="modal-dialog modal-dialog-centered" role="document">
+	    <div class="modal-content">
+	      <div class="pop-up-error modal-header">
+	        <h5 class="modal-title" id="exampleModalLongTitle">Worktimes are not correct!</h5>
+	        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+	          <span aria-hidden="true">&times;</span>
+	        </button>
+	      </div>
+	      <div class="pop-up-window-buttons modal-footer">
+	        <a type="button" class="btn btn-primary" data-dismiss="modal" href="#">Ok</a>
+	      </div>
+	    </div>
+	  </div>
+	</div>
+	
+	<div class="modal fade" id="deletedWorktimesWithoutSave" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+	  <div class="modal-dialog modal-dialog-centered" role="document">
+	    <div class="modal-content">
+	      <div class="pop-up-error modal-header">
+	        <h5 class="modal-title" id="exampleModalLongTitle">Deleted some worktimes without save!</h5>
+	        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+	          <span aria-hidden="true">&times;</span>
+	        </button>
+	      </div>
+	      <div class="pop-up-window-buttons modal-footer"> 
+	      	<a class="btn btn-secondary" href="workday.html">Workdays</a>
+	        	        <a type="button" class="btn btn-primary" data-dismiss="modal" href="#">Edit</a>
+	      </div>
+	    </div>
+	  </div>
+	</div>
+	
+	<script src="https://unpkg.com/ionicons@5.0.0/dist/ionicons.js"></script>
+	
+</body>
+</html>

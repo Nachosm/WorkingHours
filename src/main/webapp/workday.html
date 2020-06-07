@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<!-- Required meta tags, viewport needed for Bootstrap -->
+	    <meta charset="utf-8">
+	    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+	    
+		<!-- Bootstrap CSS -->
+		<link rel="stylesheet" href="assets/css/bootstrap.min.css">
+		<link rel="stylesheet" href="css/worktimeRecording.css">
+		<!-- Fonts -->
+	    <link href='http://fonts.googleapis.com/css?family=Lato:100,300,400,300italic' rel='stylesheet' type='text/css'>
+	    
+	    <!-- jquery is not required yet -->
+	    <!-- <script type="text/javascript" src="js/lib/jquery-2.0.3.min.js"></script>  -->
+	    <script type="text/javascript" src="assets/js/jquery-3.5.0.min.js"></script>
+	    <script type="text/javascript" src="assets/js/bootstrap.min.js"></script>
+	    <script type="text/javascript" src="assets/js/handlebars-v4.7.6.js"></script>
+	    <script type="text/javascript" src="js/utils.js"></script>
+	    <script type="text/javascript" src="js/worktimesUtil.js"></script>
+	    <script type="text/javascript" src="js/workday.js"></script>
+	    
+	    <script id="users-template" type="text/x-handlebars-template">
+			{{#with user}}
+				<div class="row mb-3">
+					<div class="col-4">
+						{{username}}
+					</div>
+					<div class="col-8">
+						
+					</div>
+				</div>
+			{{/with}}
+	    </script>
+	    
+	    <script id="date-template" type="text/x-handlebars-template">
+			{{#with selectedDate}}
+			<span>
+				{{date}}
+			</span>
+			{{/with}}
+	    </script>
+	    
+	    <script id="users-list-template" type="text/x-handlebars-template">
+				<div class="row mb-3">
+					<div class="col-4">
+						<select type="text" class="form-control">
+							{{#each users}}
+							{{#with this}}
+								<option onClick="loadSelectedUser({{userId}}, '{{userName}}')" value="{{userId}}">{{userName}}</option>
+							{{/with}}
+							{{/each}}
+						</select>
+					</div>
+					<div class="col-4">
+						
+					</div>
+					{{#with selectedDate}}
+					<div class="col-4">
+						<div class="col-third">
+							<a href="#" class="btn btn-scroll"><ion-icon name="chevron-back-outline" id="step-backward"></ion-icon></a>
+							<div class="content-date" id="currentDate">{{date}}</div>
+							<a href="#" class="btn btn-scroll"><ion-icon name="chevron-forward-outline" id="step-forward"></ion-icon></a>
+						</div>
+					</div>
+					{{/with}}
+				</div>
+	    </script>
+	    
+	    <script id="workdays-row-template" type="text/x-handlebars-template">
+		{{#each workdays}}
+		{{#with this}}
+				<div class="row mb-1 workday" >
+					<div class="col-4 themed-grid-col"><input type="text" class="form-control" value="{{date}}" disabled></div>
+					<div class="col-4 themed-grid-col"><input type="text" class="form-control" value="{{workhours}}" disabled></div>
+					<div class="col-4 themed-grid-col"><a class="btn btn-add" id="deleteWorktime" onclick="modifyWorktimes({{id}}, '{{date}}')" href="WorktimesRecording.html"><ion-icon name="construct-outline"></ion-icon></a></div>
+				</div>
+		{{/with}}
+		{{/each}}
+    	</script>
+    	
+    	<script id="workdays-summary-row-template" type="text/x-handlebars-template">
+		{{#with summary}}
+			<div class="row mb-3">
+				<div class="col-8 themed-grid-col"><span>Workked hours current week</span></div>
+				<div class="col-4 themed-grid-col"><input type="text" class="form-control" value="{{workhoursCurrentWeek}}" disabled></div>
+			</div>
+			<div class="row mb-3">
+				<div class="col-8 themed-grid-col"><span>Workked hours previous week</span></div>
+				<div class="col-4 themed-grid-col"><input type="text" class="form-control" value="{{workhoursPreviouseWeek}}" disabled></div>
+			</div>
+		{{/with}}
+    	</script>
+
+</head>
+<body>
+<!-- <a href="#" class="btn btn-scroll"><ion-icon name="chevron-back-outline"></ion-icon></a>
+							<div class="content-date" id="currentDate">{{date}}</div>
+							<a href="#" class="btn btn-scroll"><ion-icon name="chevron-forward-outline"></ion-icon></a>
+						 -->
+	<section class="container container-workday">
+		<form>
+			<div class="row mb-5 header">
+				<div class="col-12 themed-grid-col"><h1>Workdays</h1></div>
+			</div>
+			<div id="users-table">
+			
+			</div>
+			
+				<div class="row mb-3 date">
+					<div class="col-4"> 
+						
+					</div>
+					<div class="col-4"> 
+						<div class="col-third">
+							<a href="#" class="btn btn-scroll" ><ion-icon id="stepBackward" name="chevron-back-outline"></ion-icon></a>
+							<div class="content-date" id="currentDate">Date</div>
+							<a href="#" class="btn btn-scroll" ><ion-icon id="stepForward" name="chevron-forward-outline"></ion-icon></a>
+						</div>
+					</div>
+					<div class="col-4"> 
+						
+					</div>
+					<div class="col-4">
+					</div>
+					<div class="col-4">
+						
+					</div>
+				</div>
+				
+			<div class="row mb-3 input-name">
+				<div class="col-4 themed-grid-col">Day</div>
+				<div class="col-4 themed-grid-col">Worked hours</div>
+				<div class="col-4 themed-grid-col">Edit</div>
+			</div>
+			
+			<hr class="mb-4">
+			
+			<div id="workdays-table">
+				<div class="row mb-1 row-btn">
+					<div class="col-5 themed-grid-col"></div>
+					<div class="loader"></div> 
+				</div> 
+			</div>
+			
+			<hr class="mb-4">
+			
+			<div id="workdays-summary">
+				<div class="row mb-3">
+					<div class="col-8 themed-grid-col"><span>Workked hours current week</span></div>
+					<div class="col-4 themed-grid-col"><input type="text" class="form-control" value="1" disabled></div>
+				</div>
+				<div class="row mb-3">
+					<div class="col-8 themed-grid-col"><span>Workked hours previous week</span></div>
+					<div class="col-4 themed-grid-col"><input type="text" class="form-control" value="1" disabled></div>
+				</div>
+			</div>
+		</form>
+		
+			
+		
+	</section>
+	<script src="https://unpkg.com/ionicons@5.0.0/dist/ionicons.js"></script>
+	</body>
+</html>
